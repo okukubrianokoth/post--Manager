@@ -102,5 +102,24 @@
   
   },
   
-  "description": ""
+  "description": "A dynamic blog post manager built with **HTML, CSS, JavaScript**, and powered by `json-server`. This app allows users to create, view, edit, and delete blog posts — all using a local mock REST API.",
+  
+  "repository": {
+  
+    
+  "type": "git",
+  
+    
+  "url": "git+https://github.com/okukubrianokoth/post--Manager.git"
+  
+  },
+  
+  "bugs": {
+  
+    
+  "url": "https://github.com/okukubrianokoth/post--Manager/issues"
+  
+  },
+  
+  "homepage": "https://github.com/okukubrianokoth/post--Manager#readme"
 }

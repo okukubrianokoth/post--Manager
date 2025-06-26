@@ -1,43 +1,52 @@
+// Base URL for json-server API
 const BASE_URL = "http://localhost:3000";
 
-let posts = [];
-let currentPost = null;
+// Global variables
+let posts = [];          // Array to store all posts
+let currentPost = null;  // The post currently selected
 
-
+// Fetch all posts from the server
 async function fetchPosts() {
-    try {
-        const res = await fetch(`${BASE_URL}/posts`);
-        if (!res.ok) throw new Error("Failed to fetch posts");
-        posts = await res.json();
-    } catch (error) {
-        alert(error.message);
-    }
+  try {
+    const res = await fetch(`${BASE_URL}/posts`);
+    if (!res.ok) throw new Error("Failed to fetch posts");
+    posts = await res.json(); 
+  } catch (error) {
+    alert(error.message); 
+  }
 }
 
-
+// Render all post titles in the left sidebar
 function displayPosts() {
-    const postList = document.getElementById("post-list");
-    postList.innerHTML = "";
+  const postList = document.getElementById("post-list");
+  postList.innerHTML = ""; // Clear existing list
 
-    posts.forEach(post => {
-        const div = document.createElement("div");
-        div.textContent = post.title;
-        div.classList.add("post-item");
-        if (currentPost && post.id === currentPost.id) div.classList.add("selected");
+  posts.forEach(post => {
+    const div = document.createElement("div");
+    div.textContent = post.title;
+    div.classList.add("post-item");
 
-        div.addEventListener("click", () => {
-            showPostDetails(post);
-        });
+    // Highlight currently selected post
+    if (currentPost && post.id === currentPost.id) {
+      div.classList.add("selected");
+    }
 
-        postList.appendChild(div);
+    // Add click event to load post details
+    div.addEventListener("click", () => {
+      showPostDetails(post);
     });
+
+    postList.appendChild(div); 
+  });
 }
 
-
+// Display details for the selected post
 function showPostDetails(post) {
-    currentPost = post;
-    const postDetail = document.getElementById("post-detail");
-    postDetail.innerHTML = `
+  currentPost = post;
+  const postDetail = document.getElementById("post-detail");
+
+  // Inject post content and edit form into DOM
+  postDetail.innerHTML = `
     <h2>${post.title}</h2>
     <p><strong>Author:</strong> ${post.author}</p>
     <p>${post.content}</p>
@@ -55,122 +64,133 @@ function showPostDetails(post) {
     </form>
   `;
 
-    displayPosts();
+  displayPosts(); // Refresh sidebar and highlight selected post
 
-    document.getElementById("edit-btn").addEventListener("click", () => {
-        document.getElementById("edit-post-form").classList.remove("hidden");
-        document.getElementById("edit-btn").style.display = "none";
-        document.getElementById("delete-btn").style.display = "none";
-    });
+  // Edit button: Show the edit form
+  document.getElementById("edit-btn").addEventListener("click", () => {
+    document.getElementById("edit-post-form").classList.remove("hidden");
+    document.getElementById("edit-btn").style.display = "none";
+    document.getElementById("delete-btn").style.display = "none";
+  });
 
+  // Cancel button: Hide edit form and show original buttons
+  document.getElementById("edit-cancel-btn").addEventListener("click", () => {
+    document.getElementById("edit-post-form").classList.add("hidden");
+    document.getElementById("edit-btn").style.display = "inline-block";
+    document.getElementById("delete-btn").style.display = "inline-block";
+  });
 
-    document.getElementById("edit-cancel-btn").addEventListener("click", () => {
-        document.getElementById("edit-post-form").classList.add("hidden");
-        document.getElementById("edit-btn").style.display = "inline-block";
-        document.getElementById("delete-btn").style.display = "inline-block";
-    });
+  //  Submit edited post
+  document.getElementById("edit-post-form").addEventListener("submit", async (e) => {
+    e.preventDefault(); // Stop form from refreshing the page
 
+    // Get updated values from inputs
+    const updatedTitle = document.getElementById("edit-title").value.trim();
+    const updatedContent = document.getElementById("edit-content").value.trim();
 
-    document.getElementById("edit-post-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const updatedTitle = document.getElementById("edit-title").value.trim();
-        const updatedContent = document.getElementById("edit-content").value.trim();
-
-        if (!updatedTitle || !updatedContent) {
-            alert("Title and content cannot be empty.");
-            return;
-        }
-
-        try {
-            const res = await fetch(`${BASE_URL}/posts/${post.id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    title: updatedTitle,
-                    content: updatedContent,
-                }),
-            });
-            if (!res.ok) throw new Error("Failed to update post");
-
-            const updatedPost = await res.json();
-
-
-            posts = posts.map(p => (p.id === updatedPost.id ? updatedPost : p));
-            showPostDetails(updatedPost);
-        } catch (error) {
-            alert(error.message);
-        }
-    });
-
-
-    document.getElementById("delete-btn").addEventListener("click", async () => {
-        if (!confirm("Are you sure you want to delete this post?")) return;
-
-        try {
-            const res = await fetch(`${BASE_URL}/posts/${post.id}`, {
-                method: "DELETE",
-            });
-            if (!res.ok) throw new Error("Failed to delete post");
-
-            posts = posts.filter(p => p.id !== post.id);
-            currentPost = null;
-            displayPosts();
-
-            const postDetail = document.getElementById("post-detail");
-            postDetail.innerHTML = "<p>Select a post to see details here.</p>";
-        } catch (error) {
-            alert(error.message);
-        }
-    });
-}
-
-
-function addNewPostListener() {
-    const form = document.getElementById("new-post-form");
-
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const title = document.getElementById("new-title").value.trim();
-        const content = document.getElementById("new-content").value.trim();
-        const author = document.getElementById("new-author").value.trim();
-
-        if (!title || !content || !author) {
-            alert("Please fill in all fields.");
-            return;
-        }
-
-        try {
-            const res = await fetch(`${BASE_URL}/posts`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ title, content, author }),
-            });
-            if (!res.ok) throw new Error("Failed to add post");
-
-            const newPost = await res.json();
-            posts.push(newPost);
-
-            form.reset();
-            showPostDetails(newPost);
-            displayPosts();
-        } catch (error) {
-            alert(error.message);
-        }
-    });
-}
-
-
-async function main() {
-    await fetchPosts();
-    displayPosts();
-
-    if (posts.length > 0) {
-        showPostDetails(posts[0]);
+    if (!updatedTitle || !updatedContent) {
+      alert("Title and content cannot be empty.");
+      return;
     }
 
-    addNewPostListener();
+    try {
+      // Send PATCH request to update the post
+      const res = await fetch(`${BASE_URL}/posts/${post.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: updatedTitle,
+          content: updatedContent,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update post");
+
+      const updatedPost = await res.json();
+
+      // Replace updated post in the local posts array
+      posts = posts.map(p => (p.id === updatedPost.id ? updatedPost : p));
+      showPostDetails(updatedPost); 
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+
+  // Delete button: Remove post
+  document.getElementById("delete-btn").addEventListener("click", async () => {
+    if (!confirm("Are you sure you want to delete this post?")) return;
+
+    try {
+      const res = await fetch(`${BASE_URL}/posts/${post.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Failed to delete post");
+
+      // Remove from local list and refresh UI
+      posts = posts.filter(p => p.id !== post.id);
+      currentPost = null;
+      displayPosts();
+
+      // Show default message
+      document.getElementById("post-detail").innerHTML = "<p>Select a post to see details here.</p>";
+    } catch (error) {
+      alert(error.message);
+    }
+  });
 }
 
+// ➕ Handle form for adding new posts
+function addNewPostListener() {
+  const form = document.getElementById("new-post-form");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    // Get input values
+    const title = document.getElementById("new-title").value.trim();
+    const content = document.getElementById("new-content").value.trim();
+    const author = document.getElementById("new-author").value.trim();
+
+    if (!title || !content || !author) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    try {
+      // Send POST request to add new post
+      const res = await fetch(`${BASE_URL}/posts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content, author }),
+      });
+
+      if (!res.ok) throw new Error("Failed to add post");
+
+      const newPost = await res.json();
+      posts.push(newPost); 
+
+      form.reset();               
+      showPostDetails(newPost);   
+      displayPosts();             
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+}
+
+//  Main function: runs on page load
+async function main() {
+  await fetchPosts(); 
+  displayPosts();         
+
+  if (posts.length > 0) {
+    showPostDetails(posts[0]);
+  }
+
+   // Enable "Add New Post" form
+  addNewPostListener();  
+}
+
+//  Run main() after HTML fully loads
 document.addEventListener("DOMContentLoaded", main);
