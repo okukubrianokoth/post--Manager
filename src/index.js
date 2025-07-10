@@ -1,5 +1,5 @@
 // Base URL for json-server API
-const BASE_URL = "https://json-server-mqlu.onrender.com";
+const BASE_URL = "http://localhost:3000";
 
 // Global variables
 let posts = [];          // Array to store all posts
